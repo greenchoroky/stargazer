@@ -1,624 +1,154 @@
 <!DOCTYPE html>
-<html lang="ko" class="h-full">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>천체관측회 야외 관측일지 (Astronomical Observation Field Guide)</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        space: {
-                            900: '#0B0F19',
-                            800: '#111827',
-                            700: '#1F2937',
-                            600: '#374151',
-                        },
-                        starlight: {
-                            DEFAULT: '#38BDF8',
-                            glow: '#0EA5E9',
-                            accent: '#F59E0B'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- Google Fonts Inter & JetBrains Mono -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <!-- FontAwesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>천체관측 일지 기록 앱</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        
-        /* Custom scrollbar for clean card aesthetic */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #0B0F19; }
-        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #4B5563; }
-
         @media print {
-            body { background: white !important; color: black !important; }
+            body { background: white; padding: 0; }
             .no-print { display: none !important; }
             .print-only { display: block !important; }
-            .print-card { border: 1px solid #cbd5e1 !important; break-inside: avoid; background: white !important; color: black !important; box-shadow: none !important; }
+            box-shadow { box-shadow: none !important; }
         }
-        .print-only { display: none; }
     </style>
 </head>
-<body class="bg-space-900 text-gray-100 min-h-full flex flex-col selection:bg-starlight selection:text-space-900">
+<body class="bg-slate-950 text-slate-100 min-h-screen py-8 px-4 font-sans">
+    <div class="max-w-3xl mx-auto bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 md:p-8">
+        
+        <!-- Header -->
+        <div class="text-center border-b border-slate-800 pb-6 mb-6">
+            <h1 class="text-2xl md:text-3xl font-bold text-sky-400">🔭 천체관측 실습 보고서</h1>
+            <p class="text-slate-400 text-sm mt-1">학생 관측 기록 및 PDF 내보내기</p>
+        </div>
 
-    <!-- Top Navigation Header -->
-    <header class="bg-space-800/80 backdrop-blur-md border-b border-gray-800 sticky top-0 z-50 no-print">
-        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-sky-400 flex items-center justify-center text-white shadow-lg shadow-sky-500/20">
-                    <i class="fa-solid fa-moon text-lg"></i>
-                </div>
-                <div>
-                    <h1 class="font-bold text-lg text-white tracking-tight flex items-center gap-2">
-                        천체관측회 야외 관측일지
-                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30">Field Guide v2.0</span>
-                    </h1>
-                    <p class="text-xs text-gray-400">학생용 디지털 관측 레코드 및 PDF 보고서 생성기</p>
-                </div>
-            </div>
+        <form id="observationForm" class="space-y-8" onsubmit="event.preventDefault();">
             
-            <div class="flex items-center gap-2">
-                <button onclick="app.resetForm()" title="작성 내용 초기화" class="px-3 py-2 text-xs font-medium rounded-lg bg-space-700 hover:bg-space-600 text-gray-300 transition flex items-center gap-1.5 border border-gray-700">
-                    <i class="fa-solid fa-rotate-right"></i>
-                    <span class="hidden sm:inline">초기화</span>
-                </button>
-                <button onclick="app.openPreviewModal()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white shadow-md shadow-sky-500/25 transition flex items-center gap-2">
-                    <i class="fa-solid fa-file-pdf"></i>
-                    <span>PDF 미리보기 및 내보내기</span>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Container -->
-    <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-6 space-y-6">
-
-        <!-- Info Banner -->
-        <div class="bg-gradient-to-r from-space-800 to-indigo-950/40 border border-indigo-900/50 rounded-2xl p-5 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 no-print">
-            <div class="space-y-1">
-                <h2 class="text-base font-semibold text-white flex items-center gap-2">
-                    <i class="fa-solid fa-compass text-sky-400"></i> 관측 지침 및 안내
-                </h2>
-                <p class="text-sm text-gray-300">
-                    달, 이중성 알비레오, 토성, 그리고 밤하늘의 주요 별자리를 관측하고 각 대상별로 최대 5장의 관측 사진(스케치 포함)을 업로드하세요. 모든 작성이 완료되면 PDF로 출력하여 제출할 수 있습니다.
-                </p>
-            </div>
-            <div class="flex items-center gap-3 shrink-0">
-                <div class="text-right hidden lg:block">
-                    <div class="text-xs text-gray-400">현재 상태</div>
-                    <div id="completion-status" class="text-xs font-semibold text-amber-400">작성 대기 중 (0/4 대상)</div>
-                </div>
-            </div>
-        </div>
-
-        <form id="observation-form" onsubmit="event.preventDefault();" class="space-y-6">
-
-            <!-- 1. Student Info Card -->
-            <section class="bg-space-800/90 border border-gray-700/60 rounded-2xl p-6 shadow-xl space-y-4 no-print">
-                <div class="flex items-center justify-between border-b border-gray-700/60 pb-4">
-                    <h3 class="font-semibold text-white text-base flex items-center gap-2">
-                        <span class="w-7 h-7 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center text-sm font-bold">1</span>
-                        학생 기본 정보
-                    </h3>
-                    <span class="text-xs text-gray-400">* 모든 항목은 필수 입력입니다.</span>
-                </div>
-
+            <!-- 1. 기본 정보 -->
+            <div class="bg-slate-800/50 p-5 rounded-xl border border-slate-700/60 space-y-4">
+                <h2 class="text-lg font-semibold text-sky-300 flex items-center gap-2">📌 1. 기본 정보</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-xs font-medium text-gray-300 mb-1.5">학번 (Student ID)</label>
-                        <input type="text" id="student-id" placeholder="예: 20315" required
-                            class="w-full bg-space-900 border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500 transition mono">
+                        <label class="block text-xs font-medium text-slate-300 mb-1">학번</label>
+                        <input type="text" id="studentId" required placeholder="예: 20115" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-300 mb-1.5">이름 (Name)</label>
-                        <input type="text" id="student-name" placeholder="예: 홍길동" required
-                            class="w-full bg-space-900 border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500 transition">
+                        <label class="block text-xs font-medium text-slate-300 mb-1">이름</label>
+                        <input type="text" id="studentName" required placeholder="예: 홍길동" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-sky-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-300 mb-1.5">관측 일시 (Observation Date/Time)</label>
-                        <input type="datetime-local" id="observation-date" required
-                            class="w-full bg-space-900 border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500 transition mono">
+                        <label class="block text-xs font-medium text-slate-300 mb-1">관측 일시</label>
+                        <input type="datetime-local" id="observeDate" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-sky-500 text-slate-200">
                     </div>
-                </div>
-            </section>
-
-            <!-- 2. Observation Targets (Tabs / Sections) -->
-            <div class="space-y-6 no-print">
-                <div class="flex items-center justify-between">
-                    <h3 class="font-semibold text-white text-base flex items-center gap-2">
-                        <span class="w-7 h-7 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center text-sm font-bold">2</span>
-                        관측 대상별 기록 및 사진 업로드 (최대 5장)
-                    </h3>
-                </div>
-
-                <!-- Target Tabs Nav -->
-                <div class="flex flex-wrap gap-2 border-b border-gray-800 pb-2">
-                    <button type="button" onclick="app.switchTab('moon')" id="tab-btn-moon" class="px-4 py-2 text-xs font-semibold rounded-xl bg-sky-500 text-space-900 transition flex items-center gap-2 shadow-md">
-                        <i class="fa-solid fa-moon"></i> 달 (Moon)
-                    </button>
-                    <button type="button" onclick="app.switchTab('albireo')" id="tab-btn-albireo" class="px-4 py-2 text-xs font-semibold rounded-xl bg-space-800 hover:bg-space-700 text-gray-300 transition flex items-center gap-2 border border-gray-700">
-                        <i class="fa-solid fa-star"></i> 알비레오 (Albireo)
-                    </button>
-                    <button type="button" onclick="app.switchTab('saturn')" id="tab-btn-saturn" class="px-4 py-2 text-xs font-semibold rounded-xl bg-space-800 hover:bg-space-700 text-gray-300 transition flex items-center gap-2 border border-gray-700">
-                        <i class="fa-solid fa-ring"></i> 토성 (Saturn)
-                    </button>
-                    <button type="button" onclick="app.switchTab('constellation')" id="tab-btn-constellation" class="px-4 py-2 text-xs font-semibold rounded-xl bg-space-800 hover:bg-space-700 text-gray-300 transition flex items-center gap-2 border border-gray-700">
-                        <i class="fa-solid fa-meteor"></i> 별자리 (Constellation)
-                    </button>
-                </div>
-
-                <!-- Tab Content Containers -->
-                <div id="tab-content-container">
-                    <!-- Dynamic target cards rendered by JS -->
                 </div>
             </div>
 
-            <!-- 3. General Impressions (소감) -->
-            <section class="bg-space-800/90 border border-gray-700/60 rounded-2xl p-6 shadow-xl space-y-4 no-print">
-                <div class="flex items-center justify-between border-b border-gray-700/60 pb-4">
-                    <h3 class="font-semibold text-white text-base flex items-center gap-2">
-                        <span class="w-7 h-7 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center text-sm font-bold">3</span>
-                        종합 소감 및 배운 점 (Impressions & Conclusion)
-                    </h3>
-                </div>
-                <div>
-                    <textarea id="general-impression" rows="4" placeholder="천체관측회에 참여한 전체적인 소감, 알게 된 점, 느낀 점을 자유롭게 기록하세요."
-                        class="w-full bg-space-900 border border-gray-700 rounded-xl p-3.5 text-sm text-white focus:outline-none focus:border-sky-500 transition resize-y"></textarea>
-                </div>
-            </section>
+            <!-- 2. 관측 대상별 기록 (달, 알비레오, 토성, 별자리) -->
+            <div class="space-y-6">
+                <h2 class="text-lg font-semibold text-sky-300">✨ 2. 관측 대상별 세부 기록</h2>
+                
+                <!-- 대상 컴포넌트 생성 함수로 처리되는 영역 -->
+                <div id="targetsContainer" class="space-y-6"></div>
+            </div>
 
-            <!-- Bottom Action Bar -->
-            <div class="flex items-center justify-end gap-3 pt-4 no-print">
-                <button type="button" onclick="app.openPreviewModal()" class="px-6 py-3 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-sky-500/20 transition flex items-center gap-2 text-sm">
-                    <i class="fa-solid fa-file-arrow-down"></i>
-                    <span>보고서 완성 및 PDF 미리보기</span>
+            <!-- 3. 소감 -->
+            <div class="bg-slate-800/50 p-5 rounded-xl border border-slate-700/60 space-y-3">
+                <h2 class="text-lg font-semibold text-sky-300">📝 3. 종합 소감</h2>
+                <textarea id="impressions" rows="4" placeholder="오늘 관측을 통해 느낀 점이나 알게 된 점을 자유롭게 적어주세요." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm focus:outline-none focus:border-sky-500 text-slate-200"></textarea>
+            </div>
+
+            <!-- 4. PDF 내보내기 버튼 -->
+            <div class="pt-4 no-print">
+                <button type="button" onclick="generatePDF()" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold py-3.5 px-6 rounded-xl transition duration-200 shadow-lg flex items-center justify-center gap-2 text-base cursor-pointer">
+                    <span>📥 PDF 미리보기 및 내보내기 (저장)</span>
                 </button>
+                <p class="text-xs text-center text-slate-400 mt-2">버튼을 누른 후 인쇄 대상(Destination)을 **'PDF로 저장 (Save as PDF)'**으로 선택해 주세요.</p>
             </div>
-
         </form>
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-space-800/50 border-t border-gray-800 py-6 mt-12 text-center text-xs text-gray-400 no-print">
-        <p>천체관측회 야외 관측일지 시스템 &bull; High School Astronomical Field Guide App</p>
-    </footer>
-
-    <!-- PDF Preview Modal -->
-    <div id="preview-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden no-print">
-        <div class="bg-space-800 border border-gray-700 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
-            <!-- Modal Header -->
-            <div class="px-6 py-4 border-b border-gray-700 flex items-center justify-between bg-space-900/50">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-file-lines text-sky-400"></i>
-                    <h3 class="font-bold text-white text-base">관측일지 PDF 보고서 미리보기</h3>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="app.printReport()" class="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-space-900 font-bold rounded-lg text-xs transition flex items-center gap-1.5 shadow-md">
-                        <i class="fa-solid fa-print"></i> 인쇄 / PDF로 저장
-                    </button>
-                    <button onclick="app.closePreviewModal()" class="w-8 h-8 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 flex items-center justify-center transition">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Modal Body (Printable Report Layout) -->
-            <div class="flex-grow overflow-y-auto p-6 md:p-10 bg-gray-100 text-gray-900" id="printable-report-area">
-                <!-- Report content injected dynamically -->
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="px-6 py-4 border-t border-gray-700 bg-space-900/50 flex items-center justify-between text-xs text-gray-400">
-                <span>프롬프트: '인쇄 / PDF로 저장' 버튼을 누른 뒤 대상 프린터를 'PDF로 저장(Save as PDF)'으로 설정하세요.</span>
-                <button onclick="app.closePreviewModal()" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition">닫기</button>
-            </div>
-        </div>
     </div>
 
-    <!-- Application Script -->
     <script>
-        class ObservationApp {
-            constructor() {
-                this.currentTab = 'moon';
-                this.targets = {
-                    moon: {
-                        title: '달 (Moon)',
-                        icon: 'fa-moon',
-                        time: '',
-                        telescope: '',
-                        notes: '',
-                        photos: [] // up to 5 base64 or object URLs
-                    },
-                    albireo: {
-                        title: '알비레오 (Albireo - 이중성)',
-                        icon: 'fa-star',
-                        time: '',
-                        telescope: '',
-                        notes: '',
-                        photos: []
-                    },
-                    saturn: {
-                        title: '토성 (Saturn)',
-                        icon: 'fa-ring',
-                        time: '',
-                        telescope: '',
-                        notes: '',
-                        photos: []
-                    },
-                    constellation: {
-                        title: '별자리 (Constellation)',
-                        icon: 'fa-meteor',
-                        constellationName: '',
-                        time: '',
-                        telescope: '', // imaging method / telescope
-                        notes: '',
-                        photos: []
-                    }
-                };
+        const targetTypes = [
+            { id: 'moon', name: '달', hasConstellation: false },
+            { id: 'albireo', name: '알비레오', hasConstellation: false },
+            { id: 'saturn', name: '토성', hasConstellation: false },
+            { id: 'constellation', name: '별자리', hasConstellation: true }
+        ];
 
-                this.init();
-            }
+        function initTargets() {
+            const container = document.getElementById('targetsContainer');
+            let html = '';
 
-            init() {
-                // Set default datetime to now formatted for input
-                const now = new Date();
-                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-                const formattedNow = now.toISOString().slice(0, 16);
-                const dateInput = document.getElementById('observation-date');
-                if (dateInput && !dateInput.value) {
-                    dateInput.value = formattedNow;
-                }
-
-                // Load saved data if any in sessionStorage
-                this.loadFromSession();
-
-                // Render current tab form
-                this.renderTabContent();
-                this.updateStatus();
-            }
-
-            switchTab(tabKey) {
-                this.saveCurrentTabState();
-                this.currentTab = tabKey;
-
-                // Update tab buttons style
-                ['moon', 'albireo', 'saturn', 'constellation'].forEach(t => {
-                    const btn = document.getElementById(`tab-btn-${t}`);
-                    if (t === tabKey) {
-                        btn.className = "px-4 py-2 text-xs font-semibold rounded-xl bg-sky-500 text-space-900 transition flex items-center gap-2 shadow-md";
-                    } else {
-                        btn.className = "px-4 py-2 text-xs font-semibold rounded-xl bg-space-800 hover:bg-space-700 text-gray-300 transition flex items-center gap-2 border border-gray-700";
-                    }
-                });
-
-                this.renderTabContent();
-            }
-
-            saveCurrentTabState() {
-                const target = this.targets[this.currentTab];
-                if (!target) return;
-
-                const timeEl = document.getElementById('field-time');
-                const teleEl = document.getElementById('field-telescope');
-                const notesEl = document.getElementById('field-notes');
-                const nameEl = document.getElementById('field-constellation-name');
-
-                if (timeEl) target.time = timeEl.value;
-                if (teleEl) target.telescope = teleEl.value;
-                if (notesEl) target.notes = notesEl.value;
-                if (nameEl) target.constellationName = nameEl.value;
-
-                this.saveToSession();
-            }
-
-            renderTabContent() {
-                const container = document.getElementById('tab-content-container');
-                const target = this.targets[this.currentTab];
-
-                let extraFieldHTML = '';
-                if (this.currentTab === 'constellation') {
-                    extraFieldHTML = `
-                        <div class="mb-4">
-                            <label class="block text-xs font-medium text-gray-300 mb-1.5">관측 별자리 이름 (Constellation Name)</label>
-                            <input type="text" id="field-constellation-name" value="${target.constellationName || ''}" placeholder="예: 백조자리의 북십자가, 카시오페이아자리 등"
-                                class="w-full bg-space-900 border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500 transition">
-                        </div>
-                    `;
-                }
-
-                let photosHTML = '';
-                target.photos.forEach((photo, idx) => {
-                    photosHTML += `
-                        <div class="relative group aspect-square bg-space-900 border border-gray-700 rounded-xl overflow-hidden flex items-center justify-center">
-                            <img src="${photo}" alt="관측 사진 ${idx+1}" class="w-full h-full object-cover">
-                            <button type="button" onclick="app.removePhoto('${this.currentTab}', ${idx})" class="absolute top-2 right-2 w-7 h-7 rounded-lg bg-red-600/80 hover:bg-red-600 text-white flex items-center justify-center text-xs shadow-lg transition opacity-0 group-hover:opacity-100">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                            <span class="absolute bottom-1 left-1 bg-black/60 px-2 py-0.5 rounded text-[10px] text-gray-300">${idx+1}/5</span>
-                        </div>
-                    `;
-                });
-
-                if (target.photos.length < 5) {
-                    photosHTML += `
-                        <label class="aspect-square bg-space-900/50 border-2 border-dashed border-gray-700 hover:border-sky-500 rounded-xl flex flex-col items-center justify-center cursor-pointer transition group">
-                            <div class="w-10 h-10 rounded-full bg-space-800 group-hover:bg-sky-500/20 text-gray-400 group-hover:text-sky-400 flex items-center justify-center transition mb-2">
-                                <i class="fa-solid fa-camera text-base"></i>
-                            </div>
-                            <span class="text-xs font-medium text-gray-400 group-hover:text-gray-200">사진 추가</span>
-                            <span class="text-[10px] text-gray-500 mt-0.5">(${target.photos.length}/5장)</span>
-                            <input type="file" accept="image/*" class="hidden" onchange="app.handlePhotoUpload(event, '${this.currentTab}')">
-                        </label>
-                    `;
-                }
-
-                container.innerHTML = `
-                    <div class="bg-space-800/90 border border-gray-700/60 rounded-2xl p-6 shadow-xl space-y-5 animate-fadeIn">
-                        <div class="flex items-center justify-between border-b border-gray-700/60 pb-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-lg">
-                                    <i class="fa-solid ${target.icon}"></i>
-                                </div>
-                                <div>
-                                    <h4 class="font-bold text-white text-base">${target.title} 기록</h4>
-                                    <p class="text-xs text-gray-400">관측 데이터와 최대 5장의 사진 또는 스케치를 등록하세요.</p>
-                                </div>
-                            </div>
-                            <span class="text-xs px-2.5 py-1 rounded-full bg-space-700 text-gray-300 font-mono">탭: ${this.currentTab.toUpperCase()}</span>
-                        </div>
-
-                        ${extraFieldHTML}
-
+            targetTypes.forEach(t => {
+                html += `
+                    <div class="bg-slate-800/40 p-5 rounded-xl border border-slate-700/60 space-y-4">
+                        <h3 class="font-bold text-sky-200 text-base border-b border-slate-700/50 pb-2">🪐 관측 대상: ${t.name}</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-medium text-gray-300 mb-1.5">관측 시간 (Observation Time)</label>
-                                <input type="time" id="field-time" value="${target.time || ''}"
-                                    class="w-full bg-space-900 border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500 transition mono">
+                                <label class="block text-xs font-medium text-slate-300 mb-1">관측 시간</label>
+                                <input type="time" name="${t.id}_time" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200">
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-gray-300 mb-1.5">${this.currentTab === 'constellation' ? '촬영 방법 / 사용 장비' : '사용 망원경 (Telescope Used)'}</label>
-                                <input type="text" id="field-telescope" value="${target.telescope || ''}" placeholder="${this.currentTab === 'constellation' ? '예: 스마트폰 삼각대 고정 촬영 (ISO 1600, 15초)' : '예: 굴절망원경 100mm, 배율 100x'}"
-                                    class="w-full bg-space-900 border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500 transition">
+                                <label class="block text-xs font-medium text-slate-300 mb-1">${t.hasConstellation ? '촬영 방법' : '사용 망원경'}</label>
+                                <input type="text" name="${t.id}_scope" placeholder="${t.hasConstellation ? '예: 스마트폰 삼각대 고정 촬영' : '예: 100mm 굴절망원경'}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200">
                             </div>
                         </div>
-
+                        ${t.hasConstellation ? `
                         <div>
-                            <label class="block text-xs font-medium text-gray-300 mb-1.5">관찰 내용 및 특이사항 (Observation Notes)</label>
-                            <textarea id="field-notes" rows="3" placeholder="관측된 모습, 표면 특징, 색상, 밝기 변화 등을 상세히 기록하세요."
-                                class="w-full bg-space-900 border border-gray-700 rounded-xl p-3.5 text-sm text-white focus:outline-none focus:border-sky-500 transition resize-y">${target.notes || ''}</textarea>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">별자리 이름</label>
+                            <input type="text" name="${t.id}_const_name" placeholder="예: 백조자리, 카시오페이아자리" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200">
+                        </div>` : ''}
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">관찰 내용</label>
+                            <textarea name="${t.id}_content" rows="2" placeholder="표면 특징, 색상, 밝기 등 관찰 내용을 적어주세요." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-slate-200"></textarea>
                         </div>
-
-                        <!-- Photo Upload Grid -->
-                        <div class="space-y-2">
-                            <label class="block text-xs font-medium text-gray-300">관측 사진 / 스케치 업로드 (최대 5장)</label>
-                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                                ${photosHTML}
-                            </div>
-                            <p class="text-[11px] text-gray-400 mt-1"><i class="fa-solid fa-circle-info text-sky-400"></i> 스마트폰 카메라로 직접 촬영하거나 갤러리에서 선택할 수 있습니다.</p>
-                        </div>
-                    </div>
-                `;
-
-                // Add input listeners to auto-save to session state
-                ['field-time', 'field-telescope', 'field-notes', 'field-constellation-name'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) {
-                        el.addEventListener('input', () => {
-                            this.saveCurrentTabState();
-                            this.updateStatus();
-                        });
-                    }
-                });
-            }
-
-            handlePhotoUpload(event, targetKey) {
-                const file = event.target.files[0];
-                if (!file) return;
-
-                if (this.targets[targetKey].photos.length >= 5) {
-                    alert('사진은 최대 5장까지 업로드할 수 있습니다.');
-                    return;
-                }
-
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    this.targets[targetKey].photos.push(e.target.result);
-                    this.saveToSession();
-                    this.renderTabContent();
-                    this.updateStatus();
-                };
-                reader.readAsDataURL(file);
-            }
-
-            removePhoto(targetKey, index) {
-                this.targets[targetKey].photos.splice(index, 1);
-                this.saveToSession();
-                this.renderTabContent();
-                this.updateStatus();
-            }
-
-            updateStatus() {
-                this.saveCurrentTabState();
-                let completedCount = 0;
-                Object.keys(this.targets).forEach(k => {
-                    const t = this.targets[k];
-                    if (t.notes.trim().length > 0 || t.photos.length > 0) {
-                        completedCount++;
-                    }
-                });
-
-                const statusEl = document.getElementById('completion-status');
-                if (statusEl) {
-                    statusEl.textContent = `기록된 대상 (${completedCount}/4)`;
-                    if (completedCount === 4) {
-                        statusEl.className = "text-xs font-semibold text-emerald-400";
-                    } else {
-                        statusEl.className = "text-xs font-semibold text-amber-400";
-                    }
-                }
-            }
-
-            saveToSession() {
-                this.saveCurrentTabState();
-                const studentData = {
-                    id: document.getElementById('student-id')?.value || '',
-                    name: document.getElementById('student-name')?.value || '',
-                    date: document.getElementById('observation-date')?.value || '',
-                    impression: document.getElementById('general-impression')?.value || ''
-                };
-
-                const payload = {
-                    student: studentData,
-                    targets: this.targets
-                };
-
-                try {
-                    sessionStorage.setItem('astro_guide_data', JSON.stringify(payload));
-                } catch (e) {
-                    // storage limit safety
-                }
-            }
-
-            loadFromSession() {
-                try {
-                    const raw = sessionStorage.getItem('astro_guide_data');
-                    if (!raw) return;
-                    const data = JSON.parse(raw);
-                    if (data.student) {
-                        if (document.getElementById('student-id')) document.getElementById('student-id').value = data.student.id || '';
-                        if (document.getElementById('student-name')) document.getElementById('student-name').value = data.student.name || '';
-                        if (document.getElementById('student-date') && data.student.date) document.getElementById('student-date').value = data.student.date;
-                        if (document.getElementById('general-impression')) document.getElementById('general-impression').value = data.student.impression || '';
-                    }
-                    if (data.targets) {
-                        this.targets = data.targets;
-                    }
-                } catch (e) {
-                    // ignore
-                }
-            }
-
-            resetForm() {
-                if (confirm('작성 중인 모든 내용이 초기화됩니다. 계속하시겠습니까?')) {
-                    sessionStorage.removeItem('astro_guide_data');
-                    window.location.reload();
-                }
-            }
-
-            openPreviewModal() {
-                this.saveCurrentTabState();
-                const studentId = document.getElementById('student-id').value.trim();
-                const studentName = document.getElementById('student-name').value.trim();
-
-                if (!studentId || !studentName) {
-                    alert('학번과 이름을 먼저 입력해 주세요.');
-                    document.getElementById('student-id').focus();
-                    return;
-                }
-
-                const reportArea = document.getElementById('printable-report-area');
-                const obsDate = document.getElementById('observation-date').value;
-                const impression = document.getElementById('general-impression').value;
-
-                let targetsHTML = '';
-                Object.keys(this.targets).forEach(k => {
-                    const t = this.targets[k];
-                    let photosGrid = '';
-                    if (t.photos.length > 0) {
-                        photosGrid = '<div class="grid grid-cols-5 gap-2 mt-3">';
-                        t.photos.forEach((p, idx) => {
-                            photosGrid += `<div class="aspect-square bg-gray-100 border border-gray-300 rounded overflow-hidden"><img src="${p}" class="w-full h-full object-cover"></div>`;
-                        });
-                        photosGrid += '</div>';
-                    } else {
-                        photosGrid = '<p class="text-xs text-gray-400 italic mt-2">등록된 사진 없음</p>';
-                    }
-
-                    const extraTitle = k === 'constellation' && t.constellationName ? ` (${t.constellationName})` : '';
-
-                    targetsHTML += `
-                        <div class="print-card bg-white border border-gray-300 rounded-xl p-5 mb-4 shadow-sm">
-                            <h4 class="font-bold text-gray-900 border-b pb-2 mb-3 flex items-center justify-between text-sm">
-                                <span>${t.title}${extraTitle}</span>
-                                <span class="text-xs text-gray-500 font-mono">시간: ${t.time || '미기재'}</span>
-                            </h4>
-                            <div class="grid grid-cols-2 gap-4 text-xs text-gray-700 mb-2">
-                                <div><strong class="text-gray-900">사용 장비:</strong> ${t.telescope || '미기재'}</div>
-                            </div>
-                            <div class="text-xs text-gray-800 bg-gray-50 p-3 rounded-lg mb-2 border border-gray-200">
-                                <strong class="text-gray-900 block mb-1">관찰 내용:</strong>
-                                <p class="whitespace-pre-wrap">${t.notes || '기록된 내용이 없습니다.'}</p>
-                            </div>
-                            <div>
-                                <span class="text-[11px] font-semibold text-gray-600 block mb-1">관측 사진 / 스케치</span>
-                                ${photosGrid}
-                            </div>
-                        </div>
-                    `;
-                });
-
-                reportArea.innerHTML = `
-                    <div class="max-w-3xl mx-auto space-y-6">
-                        <!-- Report Header -->
-                        <div class="text-center border-b-2 border-gray-900 pb-4">
-                            <h2 class="text-2xl font-black text-gray-900 tracking-tight">천체관측회 야외 관측일지 보고서</h2>
-                            <p class="text-xs text-gray-600 mt-1">Astronomical Observation Field Guide & Report</p>
-                        </div>
-
-                        <!-- Student Info Box -->
-                        <div class="bg-gray-50 border border-gray-300 rounded-xl p-4 grid grid-cols-3 gap-4 text-xs">
-                            <div><span class="text-gray-500 block">학번</span><strong class="text-gray-900 text-sm font-mono">${studentId}</strong></div>
-                            <div><span class="text-gray-500 block">이름</span><strong class="text-gray-900 text-sm">${studentName}</strong></div>
-                            <div><span class="text-gray-500 block">관측 일시</span><strong class="text-gray-900 text-sm font-mono">${obsDate ? obsDate.replace('T', ' ') : '미기재'}</strong></div>
-                        </div>
-
-                        <!-- Targets Reports -->
-                        <div class="space-y-4">
-                            <h3 class="font-bold text-gray-900 text-sm border-l-4 border-indigo-600 pl-2">II. 관측 대상별 세부 기록</h3>
-                            ${targetsHTML}
-                        </div>
-
-                        <!-- General Impression -->
-                        <div class="print-card bg-white border border-gray-300 rounded-xl p-5 shadow-sm">
-                            <h3 class="font-bold text-gray-900 text-sm mb-2">III. 종합 소감 및 배운 점</h3>
-                            <div class="text-xs text-gray-800 bg-gray-50 p-3 rounded-lg border border-gray-200 min-h-[60px]">
-                                <p class="whitespace-pre-wrap">${impression || '작성된 소감이 없습니다.'}</p>
-                            </div>
-                        </div>
-
-                        <!-- Footer Sign -->
-                        <div class="text-center pt-8 text-xs text-gray-500">
-                            <p>위와 같이 천체관측 결과를 제출합니다.</p>
-                            <p class="mt-2 font-semibold text-gray-800">제출자: ${studentName} (${studentId})</p>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">사진 업로드 (최대 5장)</label>
+                            <input type="file" name="${t.id}_photos" accept="image/*" multiple onchange="previewImages(this)" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-sky-950 file:text-sky-300 hover:file:bg-sky-900 cursor-pointer">
+                            <div class="flex gap-2 mt-2 flex-wrap preview-container"></div>
                         </div>
                     </div>
                 `;
+            });
+            container.innerHTML = html;
+        }
 
-                document.getElementById('preview-modal').classList.remove('hidden');
-            }
-
-            closePreviewModal() {
-                document.getElementById('preview-modal').classList.add('hidden');
-            }
-
-            printReport() {
-                window.print();
+        function previewImages(input) {
+            const container = input.parentElement.querySelector('.preview-container');
+            container.innerHTML = '';
+            if (input.files) {
+                const filesToProcess = Array.from(input.files).slice(0, 5);
+                filesToProcess.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'w-16 h-16 object-cover rounded-lg border border-slate-700';
+                        container.appendChild(img);
+                    }
+                    reader.readAsDataURL(file);
+                });
             }
         }
 
-        const app = new ObservationApp();
+        function generatePDF() {
+            // 필수 입력값 간단 체크
+            const studentId = document.getElementById('studentId').value;
+            const studentName = document.getElementById('studentName').value;
+
+            if (!studentId || !studentName) {
+                alert('학번과 이름을 먼저 입력해 주세요!');
+                document.getElementById('studentId').focus();
+                return;
+            }
+
+            // 브라우저 기본 인쇄창 호출 (PDF로 저장 기능 연동)
+            window.print();
+        }
+
+        window.onload = initTargets;
     </script>
 </body>
 </html>
