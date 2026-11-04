@@ -5,16 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>천체관측 일지 기록 앱</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        @media print {
+            body { background: white; padding: 0; }
+            .no-print { display: none !important; }
+        }
+    </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen py-8 px-4 font-sans">
     <div class="max-w-3xl mx-auto bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 md:p-8">
         
         <div class="text-center border-b border-slate-800 pb-6 mb-6">
             <h1 class="text-2xl md:text-3xl font-bold text-sky-400">🔭 천체관측 실습 보고서</h1>
-            <p class="text-slate-400 text-sm mt-1">학생 관측 기록 및 구글 드라이브 제출</p>
+            <p class="text-slate-400 text-sm mt-1">학생 관측 기록 및 PDF 저장·제출</p>
         </div>
 
-        <form id="observationForm" class="space-y-8" onsubmit="event.preventDefault(); submitToServer();">
+        <form id="observationForm" class="space-y-8" onsubmit="event.preventDefault();">
             
             <!-- 1. 기본 정보 -->
             <div class="bg-slate-800/50 p-5 rounded-xl border border-slate-700/60 space-y-4">
@@ -47,18 +53,25 @@
                 <textarea id="impressions" rows="4" placeholder="오늘 관측을 통해 느낀 점이나 알게 된 점을 적어주세요." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm focus:outline-none focus:border-sky-500 text-slate-200"></textarea>
             </div>
 
-            <!-- 4. 제출하기 버튼 -->
-            <div class="pt-4">
-                <button type="submit" id="submitBtn" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold py-3.5 px-6 rounded-xl transition duration-200 shadow-lg flex items-center justify-center gap-2 text-base cursor-pointer">
-                    <span>🚀 교사 구글 드라이브로 보고서 제출하기</span>
+            <!-- 4. 버튼 영역 (PDF 저장 & 구글 드라이브 제출) -->
+            <div class="pt-4 space-y-3 no-print">
+                <!-- 폰에 PDF 저장 버튼 -->
+                <button type="button" onclick="saveToPhonePDF()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3.5 px-6 rounded-xl transition duration-200 shadow-lg flex items-center justify-center gap-2 text-base cursor-pointer">
+                    <span>📥 내 핸드폰에 PDF로 저장하기</span>
+                </button>
+
+                <!-- 구글 드라이브 제출 버튼 -->
+                <button type="button" id="submitBtn" onclick="submitToServer()" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold py-3.5 px-6 rounded-xl transition duration-200 shadow-lg flex items-center justify-center gap-2 text-base cursor-pointer">
+                    <span>🚀 제출하기</span>
                 </button>
             </div>
         </form>
     </div>
 
     <script>
-        // ⚠️ [중요] 1단계에서 복사한 구글 앱스 스크립트 웹 앱 URL을 아래 따옴표 안에 붙여넣으세요!
-        const SCRIPT_URL = '여기에_웹앱_URL을_붙여넣으세요';
+        // ⚠️ [중요] 구글 앱스 스크립트 배포 후 발급받은 '웹 앱 URL'을 아래 따옴표 안에 넣어주세요!
+        // 예: const SCRIPT_URL = 'https://script.google.com/macros/s/.../exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaNbO7rqXwS4CY7V4nTHxd2_H_5nvcE6FVcdTwbnJxFigvpBxn2QKwegQGznN0RBul/exec';
 
         const targetTypes = [
             { id: 'moon', name: '달', hasConstellation: false },
@@ -127,9 +140,32 @@
             });
         }
 
+        // 1. 내 핸드폰에 PDF로 저장하기 기능
+        function saveToPhonePDF() {
+            const studentId = document.getElementById('studentId').value;
+            const studentName = document.getElementById('studentName').value;
+
+            if (!studentId || !studentName) {
+                alert('학번과 이름을 먼저 입력해 주세요!');
+                document.getElementById('studentId').focus();
+                return;
+            }
+            window.print();
+        }
+
+        // 2. 구글 드라이브로 제출하기 기능
         async function submitToServer() {
             if (SCRIPT_URL.includes('여기에')) {
-                alert('코드 내에 구글 앱스 스크립트 웹 앱 URL이 설정되지 않았습니다!');
+                alert('코드 상단에 구글 앱스 스크립트 웹 앱 URL이 설정되지 않았습니다! URL을 입력해 주세요.');
+                return;
+            }
+
+            const studentId = document.getElementById('studentId').value;
+            const studentName = document.getElementById('studentName').value;
+
+            if (!studentId || !studentName) {
+                alert('학번과 이름을 먼저 입력해 주세요!');
+                document.getElementById('studentId').focus();
                 return;
             }
 
@@ -138,8 +174,8 @@
             btn.innerText = '⏳ 구글 드라이브로 전송 중...';
 
             const formData = {
-                studentId: document.getElementById('studentId').value,
-                studentName: document.getElementById('studentName').value,
+                studentId: studentId,
+                studentName: studentName,
                 observeDate: document.getElementById('observeDate').value,
                 impressions: document.getElementById('impressions').value,
                 targets: targetTypes.map(t => ({
@@ -160,16 +196,13 @@
                     body: JSON.stringify(formData)
                 });
 
-                alert('🎉 관측일지가 교사의 구글 드라이브로 성공적으로 제출되었습니다!');
-                document.getElementById('observationForm').reset();
-                document.querySelectorAll('[id$="_preview"]').forEach(el => el.innerHTML = '');
-                Object.keys(targetDataMap).forEach(k => targetDataMap[k] = []);
+                alert('🎉 관측일지가 성공적으로 제출되었습니다!');
             } catch (error) {
                 console.error(error);
                 alert('전송 중 오류가 발생했습니다. 다시 시도해 주세요.');
             } finally {
                 btn.disabled = false;
-                btn.innerText = '🚀 교사 구글 드라이브로 보고서 제출하기';
+                btn.innerText = '🚀 제출하기';
             }
         }
 
