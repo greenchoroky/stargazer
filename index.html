@@ -4,31 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>천체관측 일지 기록 앱</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <style>
-        @media print {
-            body { background: white; padding: 0; }
-            .no-print { display: none !important; }
-            .print-only { display: block !important; }
-            box-shadow { box-shadow: none !important; }
-        }
-    </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen py-8 px-4 font-sans">
     <div class="max-w-3xl mx-auto bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 md:p-8">
         
-        <!-- Header -->
         <div class="text-center border-b border-slate-800 pb-6 mb-6">
             <h1 class="text-2xl md:text-3xl font-bold text-sky-400">🔭 천체관측 실습 보고서</h1>
-            <p class="text-slate-400 text-sm mt-1">학생 관측 기록 및 PDF 내보내기</p>
+            <p class="text-slate-400 text-sm mt-1">학생 관측 기록 및 구글 드라이브 제출</p>
         </div>
 
-        <form id="observationForm" class="space-y-8" onsubmit="event.preventDefault();">
+        <form id="observationForm" class="space-y-8" onsubmit="event.preventDefault(); submitToServer();">
             
             <!-- 1. 기본 정보 -->
             <div class="bg-slate-800/50 p-5 rounded-xl border border-slate-700/60 space-y-4">
-                <h2 class="text-lg font-semibold text-sky-300 flex items-center gap-2">📌 1. 기본 정보</h2>
+                <h2 class="text-lg font-semibold text-sky-300">📌 1. 기본 정보</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-medium text-slate-300 mb-1">학번</label>
@@ -45,31 +35,31 @@
                 </div>
             </div>
 
-            <!-- 2. 관측 대상별 기록 (달, 알비레오, 토성, 별자리) -->
+            <!-- 2. 관측 대상별 기록 -->
             <div class="space-y-6">
                 <h2 class="text-lg font-semibold text-sky-300">✨ 2. 관측 대상별 세부 기록</h2>
-                
-                <!-- 대상 컴포넌트 생성 함수로 처리되는 영역 -->
                 <div id="targetsContainer" class="space-y-6"></div>
             </div>
 
             <!-- 3. 소감 -->
             <div class="bg-slate-800/50 p-5 rounded-xl border border-slate-700/60 space-y-3">
                 <h2 class="text-lg font-semibold text-sky-300">📝 3. 종합 소감</h2>
-                <textarea id="impressions" rows="4" placeholder="오늘 관측을 통해 느낀 점이나 알게 된 점을 자유롭게 적어주세요." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm focus:outline-none focus:border-sky-500 text-slate-200"></textarea>
+                <textarea id="impressions" rows="4" placeholder="오늘 관측을 통해 느낀 점이나 알게 된 점을 적어주세요." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm focus:outline-none focus:border-sky-500 text-slate-200"></textarea>
             </div>
 
-            <!-- 4. PDF 내보내기 버튼 -->
-            <div class="pt-4 no-print">
-                <button type="button" onclick="generatePDF()" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold py-3.5 px-6 rounded-xl transition duration-200 shadow-lg flex items-center justify-center gap-2 text-base cursor-pointer">
-                    <span>📥 PDF 미리보기 및 내보내기 (저장)</span>
+            <!-- 4. 제출하기 버튼 -->
+            <div class="pt-4">
+                <button type="submit" id="submitBtn" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold py-3.5 px-6 rounded-xl transition duration-200 shadow-lg flex items-center justify-center gap-2 text-base cursor-pointer">
+                    <span>🚀 교사 구글 드라이브로 보고서 제출하기</span>
                 </button>
-                <p class="text-xs text-center text-slate-400 mt-2">버튼을 누른 후 인쇄 대상(Destination)을 **'PDF로 저장 (Save as PDF)'**으로 선택해 주세요.</p>
             </div>
         </form>
     </div>
 
     <script>
+        // ⚠️ [중요] 1단계에서 복사한 구글 앱스 스크립트 웹 앱 URL을 아래 따옴표 안에 붙여넣으세요!
+        const SCRIPT_URL = '여기에_웹앱_URL을_붙여넣으세요';
+
         const targetTypes = [
             { id: 'moon', name: '달', hasConstellation: false },
             { id: 'albireo', name: '알비레오', hasConstellation: false },
@@ -77,37 +67,40 @@
             { id: 'constellation', name: '별자리', hasConstellation: true }
         ];
 
+        const targetDataMap = {};
+
         function initTargets() {
             const container = document.getElementById('targetsContainer');
             let html = '';
 
             targetTypes.forEach(t => {
+                targetDataMap[t.id] = [];
                 html += `
                     <div class="bg-slate-800/40 p-5 rounded-xl border border-slate-700/60 space-y-4">
                         <h3 class="font-bold text-sky-200 text-base border-b border-slate-700/50 pb-2">🪐 관측 대상: ${t.name}</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-slate-300 mb-1">관측 시간</label>
-                                <input type="time" name="${t.id}_time" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200">
+                                <input type="time" id="${t.id}_time" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-300 mb-1">${t.hasConstellation ? '촬영 방법' : '사용 망원경'}</label>
-                                <input type="text" name="${t.id}_scope" placeholder="${t.hasConstellation ? '예: 스마트폰 삼각대 고정 촬영' : '예: 100mm 굴절망원경'}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200">
+                                <input type="text" id="${t.id}_scope" placeholder="${t.hasConstellation ? '예: 스마트폰 삼각대 고정 촬영' : '예: 100mm 굴절망원경'}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200">
                             </div>
                         </div>
                         ${t.hasConstellation ? `
                         <div>
                             <label class="block text-xs font-medium text-slate-300 mb-1">별자리 이름</label>
-                            <input type="text" name="${t.id}_const_name" placeholder="예: 백조자리, 카시오페이아자리" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200">
+                            <input type="text" id="${t.id}_const_name" placeholder="예: 백조자리, 카시오페이아자리" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200">
                         </div>` : ''}
                         <div>
                             <label class="block text-xs font-medium text-slate-300 mb-1">관찰 내용</label>
-                            <textarea name="${t.id}_content" rows="2" placeholder="표면 특징, 색상, 밝기 등 관찰 내용을 적어주세요." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-slate-200"></textarea>
+                            <textarea id="${t.id}_content" rows="2" placeholder="표면 특징, 색상, 밝기 등 관찰 내용을 적어주세요." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-slate-200"></textarea>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-300 mb-1">사진 업로드 (최대 5장)</label>
-                            <input type="file" name="${t.id}_photos" accept="image/*" multiple onchange="previewImages(this)" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-sky-950 file:text-sky-300 hover:file:bg-sky-900 cursor-pointer">
-                            <div class="flex gap-2 mt-2 flex-wrap preview-container"></div>
+                            <input type="file" id="${t.id}_photos" accept="image/*" multiple onchange="handleImages(event, '${t.id}')" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-sky-950 file:text-sky-300 hover:file:bg-sky-900 cursor-pointer">
+                            <div id="${t.id}_preview" class="flex gap-2 mt-2 flex-wrap"></div>
                         </div>
                     </div>
                 `;
@@ -115,37 +108,69 @@
             container.innerHTML = html;
         }
 
-        function previewImages(input) {
-            const container = input.parentElement.querySelector('.preview-container');
-            container.innerHTML = '';
-            if (input.files) {
-                const filesToProcess = Array.from(input.files).slice(0, 5);
-                filesToProcess.forEach(file => {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.className = 'w-16 h-16 object-cover rounded-lg border border-slate-700';
-                        container.appendChild(img);
-                    }
-                    reader.readAsDataURL(file);
-                });
-            }
+        function handleImages(event, targetId) {
+            const files = Array.from(event.target.files).slice(0, 5);
+            const previewContainer = document.getElementById(`${targetId}_preview`);
+            previewContainer.innerHTML = '';
+            targetDataMap[targetId] = [];
+
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    targetDataMap[targetId].push(e.target.result);
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'w-16 h-16 object-cover rounded-lg border border-slate-700';
+                    previewContainer.appendChild(img);
+                }
+                reader.readAsDataURL(file);
+            });
         }
 
-        function generatePDF() {
-            // 필수 입력값 간단 체크
-            const studentId = document.getElementById('studentId').value;
-            const studentName = document.getElementById('studentName').value;
-
-            if (!studentId || !studentName) {
-                alert('학번과 이름을 먼저 입력해 주세요!');
-                document.getElementById('studentId').focus();
+        async function submitToServer() {
+            if (SCRIPT_URL.includes('여기에')) {
+                alert('코드 내에 구글 앱스 스크립트 웹 앱 URL이 설정되지 않았습니다!');
                 return;
             }
 
-            // 브라우저 기본 인쇄창 호출 (PDF로 저장 기능 연동)
-            window.print();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerText = '⏳ 구글 드라이브로 전송 중...';
+
+            const formData = {
+                studentId: document.getElementById('studentId').value,
+                studentName: document.getElementById('studentName').value,
+                observeDate: document.getElementById('observeDate').value,
+                impressions: document.getElementById('impressions').value,
+                targets: targetTypes.map(t => ({
+                    name: t.name,
+                    time: document.getElementById(`${t.id}_time`).value,
+                    scope: document.getElementById(`${t.id}_scope`).value,
+                    constName: t.hasConstellation ? document.getElementById(`${t.id}_const_name`).value : '',
+                    content: document.getElementById(`${t.id}_content`).value,
+                    photos: targetDataMap[t.id]
+                }))
+            };
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(formData)
+                });
+
+                alert('🎉 관측일지가 교사의 구글 드라이브로 성공적으로 제출되었습니다!');
+                document.getElementById('observationForm').reset();
+                document.querySelectorAll('[id$="_preview"]').forEach(el => el.innerHTML = '');
+                Object.keys(targetDataMap).forEach(k => targetDataMap[k] = []);
+            } catch (error) {
+                console.error(error);
+                alert('전송 중 오류가 발생했습니다. 다시 시도해 주세요.');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '🚀 교사 구글 드라이브로 보고서 제출하기';
+            }
         }
 
         window.onload = initTargets;
